@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hunt Dice — theHunter: Call of the Wild</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Alegreya+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<!-- ponytail: Google Fonts link is the one "dependency" — display face only,
+     falls back to Georgia/system serif+sans offline. -->
+<style>
+  :root {
+    --bg: #0e130d;        /* dark green-black, the game's menu base */
+    --panel: #161d13;
+    --panel2: #1e271a;
+    --line: #2e3b28;
+    --green: #5d8a4a;     /* hunter green */
+    --green-dim: #3d5c33;
+    --gold: #c8a45e;      /* brass accent, like the logo */
+    --text: #e9e2d0;      /* warm cream */
+    --dim: #98a08c;
+    --red: #b4543a;
+    --serif: "Cinzel", Georgia, serif;
+    --sans: "Alegreya Sans", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    background-image: radial-gradient(ellipse at 50% -10%, #1a2415 0%, var(--bg) 55%);
+    color: var(--text);
+    font: 15px/1.5 var(--sans);
+    padding: 28px 20px 48px;
+  }
+  .wrap { max-width: 1060px; margin: 0 auto; }
+
+  /* ---------- header ---------- */
+  header { text-align: center; margin-bottom: 26px; }
+  header .overline {
+    font-family: var(--sans); font-size: 12px; letter-spacing: 4px;
+    text-transform: uppercase; color: var(--green); margin-bottom: 6px;
+  }
+  h1 {
+    font-family: var(--serif); font-weight: 700; font-size: 40px;
+    letter-spacing: 6px; text-transform: uppercase; color: var(--gold);
+  }
+  h1 .deer { font-size: 30px; letter-spacing: 0; margin-right: 8px; }
+  header .sub {
+    font-size: 13px; color: var(--dim); letter-spacing: 1px; margin-top: 6px;
+  }
+  header .sub b { color: var(--text); font-weight: 500; }
+  .rule {
+    width: 220px; height: 1px; margin: 16px auto 0;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    position: relative;
+  }
+  .rule::after {
+    content: "◆"; position: absolute; left: 50%; top: 50%;
+    transform: translate(-50%,-50%); color: var(--gold);
+    font-size: 9px; background: var(--bg); padding: 0 8px;
+  }
+
+  /* ---------- panels ---------- */
+  .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  @media (max-width: 820px) { .cols { grid-template-columns: 1fr; } }
+  .panel {
+    border: 1px solid var(--line);
+    background: linear-gradient(180deg, var(--panel) 0%, #121810 100%);
+    border-radius: 6px; padding: 16px 18px 14px;
+  }
+  .panel > h2 {
+    font-family: var(--serif); font-size: 15px; font-weight: 500;
+    letter-spacing: 3px; text-transform: uppercase; color: var(--text);
+    display: flex; align-items: center; gap: 10px; margin-bottom: 4px;
+  }
+  .panel > h2::after {
+    content: ""; flex: 1; height: 1px;
+    background: linear-gradient(90deg, var(--line), transparent);
+  }
+  .panel .desc { font-size: 12px; color: var(--dim); margin-bottom: 12px; }
+  .group-label {
+    font-size: 11px; letter-spacing: 2px; text-transform: uppercase;
+    color: var(--green); margin: 12px 0 6px;
+  }
+  .group-label:first-of-type { margin-top: 0; }
+
+  /* ---------- chips ---------- */
+  label.chip {
+    display: flex; align-items: center; gap: 9px;
+    padding: 5px 12px 5px 6px; margin: 4px;
+    border: 1px solid var(--line); border-radius: 22px;
+    background: var(--panel2); cursor: pointer; user-select: none;
+    font-size: 13px; font-weight: 500; color: var(--dim);
+    transition: background .12s, color .12s, border-color .12s;
+  }
+  label.chip:hover { border-color: var(--green-dim); color: var(--text); }
+  label.chip input { display: none; }
+  label.chip:has(input:checked) {
+    background: var(--green-dim); border-color: var(--green);
+    color: var(--text);
+  }
+  label.chip:has(input:checked) .tag { background: var(--green); color: #0e130d; }
+  .cname { white-space: nowrap; }
+  /* hexagon reserve emblem, like the game's hex map icons */
+  .hex {
+    position: relative; flex: none; width: 32px; height: 36px;
+    background: var(--tint, #333);
+    clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .hexmono { font-family: var(--serif); font-weight: 700; font-size: 11px; letter-spacing: 1px; color: var(--text); }
+  .heximg { position: absolute; inset: 1px; object-fit: contain; }
+  .tag {
+    font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
+    background: #26301f; color: var(--green); border-radius: 3px;
+    padding: 1px 5px;
+  }
+
+  /* ---------- actions ---------- */
+  .actions {
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+    margin: 22px 0 4px; justify-content: center;
+  }
+  button {
+    font-family: var(--serif); font-weight: 700; letter-spacing: 3px;
+    text-transform: uppercase; border: 0; border-radius: 4px;
+    cursor: pointer;
+  }
+  #rollBtn {
+    font-size: 17px; padding: 14px 46px;
+    background: linear-gradient(180deg, #6d9c58 0%, var(--green-dim) 100%);
+    color: #f0ead8; border: 1px solid var(--green);
+    box-shadow: 0 0 24px rgba(93,138,74,.25), inset 0 1px 0 rgba(255,255,255,.15);
+  }
+  #rollBtn:hover:not(:disabled) { filter: brightness(1.12); }
+  #rollBtn:disabled {
+    background: var(--panel2); border-color: var(--line);
+    color: var(--dim); box-shadow: none; cursor: not-allowed;
+  }
+  button.ghost {
+    font-family: var(--sans); font-size: 12px; letter-spacing: 1px;
+    background: transparent; color: var(--dim);
+    border: 1px solid var(--line); padding: 8px 14px;
+  }
+  button.ghost:hover { color: var(--text); border-color: var(--green-dim); }
+  #validHint { font-size: 12px; color: var(--dim); width: 100%; text-align: center; }
+  #rollError {
+    margin: 10px auto 0; max-width: 600px; text-align: center;
+    color: var(--red); font-size: 13px; display: none;
+  }
+
+  /* ---------- result ticket ---------- */
+  #result {
+    margin: 26px auto 0; max-width: 640px; display: none;
+    border: 1px solid var(--gold);
+    outline: 1px solid rgba(200,164,94,.25); outline-offset: 4px;
+    border-radius: 6px;
+    background: linear-gradient(180deg, #1c2416 0%, var(--panel) 100%);
+    padding: 22px 26px 18px;
+  }
+  #result.show { display: block; }
+  #result h3 {
+    font-family: var(--serif); text-align: center; font-size: 13px;
+    letter-spacing: 4px; text-transform: uppercase; color: var(--gold);
+    margin-bottom: 14px;
+  }
+  .row {
+    display: grid; grid-template-columns: 110px 1fr; gap: 10px;
+    padding: 9px 0; border-bottom: 1px solid var(--line); align-items: baseline;
+  }
+  .row:last-of-type { border-bottom: 0; }
+  .row .k {
+    font-size: 11px; letter-spacing: 2px; text-transform: uppercase;
+    color: var(--green);
+  }
+  .row .v { font-size: 17px; font-weight: 500; }
+  .row .v.bounty {
+    font-family: var(--serif); font-size: 22px; font-weight: 700;
+    letter-spacing: 1px; color: var(--gold);
+  }
+  .row .v.bounty small {
+    font-family: var(--sans); font-size: 12px; font-weight: 400;
+    color: var(--dim); letter-spacing: 0; margin-left: 10px;
+  }
+  .row .v.bounty.second { font-size: 18px; }
+  .row .v.bounty.second small { font-size: 11px; }
+  .share { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); }
+  .sharelabel { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--green); margin-bottom: 6px; }
+  .sharebox { display: flex; gap: 8px; align-items: stretch; }
+  .sharebox code {
+    flex: 1; font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 12px;
+    color: var(--text); background: #10160e; border: 1px solid var(--line);
+    border-radius: 4px; padding: 9px 11px; white-space: pre-wrap; word-break: break-word;
+  }
+  .sharebox button { align-self: stretch; }
+  .notes { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); font-size: 12.5px; color: var(--dim); }
+  .notes p { margin: 4px 0; }
+  .ok { color: var(--green); } .bad { color: var(--red); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="overline">theHunter: Call of the Wild</div>
+    <h1><span class="deer">🦌</span>Hunt Dice</h1>
+    <div class="sub">random settings for <b>Hunt or Die</b> — map · armament · time of day · bounty</div>
+    <div class="rule"></div>
+  </header>
+
+  <div class="cols">
+    <section class="panel">
+      <h2>Reserves</h2>
+      <p class="desc">Tick the maps you own. DLC starts unticked.
+      <span class="nojs">(JS off: list shows, but roll is disabled — open this file in a real browser)</span></p>
+      <div class="group-label">Base game</div>
+      <label class="chip"><input type="checkbox" data-map="Hirschfelden" checked><span>Hirschfelden</span><span class="tag">free</span></label>
+      <label class="chip"><input type="checkbox" data-map="Layton Lake District" checked><span>Layton Lake District</span><span class="tag">free</span></label>
+      <div class="group-label">DLC reserves — 17, tick what you own</div>
+      <label class="chip"><input type="checkbox" data-map="Medved-Taiga"><span>Medved-Taiga</span><span class="tag">DLC</span></label>
+      <label class="chip"><input type="checkbox" data-map="Vurhonga Savanna"><span>Vurhonga Savanna</span><span class="tag">DLC</span></label>
+      <label class="chip"><input type="checkbox" data-map="Parque Fernando"><span>Parque Fernando</span><span class="tag">DLC</span></label>
+      <label class="chip"><input type="checkbox" data-map="Yukon Valley"><span>Yukon Valley</span><span class="tag">DLC</span></label>
+      <label class="chip"><input type="checkbox" data-map="Cuatro Colinas"><span>Cuatro Colinas</span><span class="tag">DLC</span></label>
+      <label class="chip"><input type="checkbox" data-map="Silver Ridge Peaks"><span>Silver Ridge Peaks</span><span class="tag">DLC</span></label>
+      <label class="chip"><input type="checkbox" data-map="Te Awaroa"><span>Te Awaroa</span><span class="tag">DLC</span></label>
+      <label class="chip"><input type="checkbox" data-map="Rancho del Arroyo"><span>Rancho del Arroyo</span><span class="tag">DLC</span></label>
+      <label class="chip"><input type="checkbox" data-map="Mississippi Acres"><span>Mississippi Acres</span><span class="tag">DLC</span></label>
+      <label class="chip"><input type="checkbox" data-map="Revontuli Coast"><span>Revontuli Coast</span><span class="tag">DLC</span></label>
+      <label class="chip"><input type="checkbox" data-map="New England Mountains"><span>New England Mountains</span><span class="tag">DLC</span></label>
+      <label class="chip"><input type="checkbox" data-map="Emerald Coast"><span>Emerald Coast</span><span class="tag">DLC</span></label>
+      <label class="chip"><input type="checkbox" data-map="Sundarpatan"><span>Sundarpatan</span><span class="tag">DLC</span></label>
+      <label class="chip"><input type="checkbox" data-map="Salzwiesen Park"><span>Salzwiesen Park</span><span class="tag">DLC</span></label>
+      <label class="chip"><input type="checkbox" data-map="Askiy Ridge"><span>Askiy Ridge</span><span class="tag">DLC</span></label>
+      <label class="chip"><input type="checkbox" data-map="Tòrr nan Sithean"><span>Tòrr nan Sithean</span><span class="tag">DLC</span></label>
+      <label class="chip"><input type="checkbox" data-map="Intisuyu"><span>Intisuyu</span><span class="tag">DLC</span></label>
+    </section>
+    <section class="panel">
+      <h2>Armaments</h2>
+      <p class="desc">One class is rolled per hunt. The bounty is always legal for it.</p>
+      <label class="chip"><input type="checkbox" data-weapon="small_rifle" checked><span>Small game rifle</span><span class="tag">1-6</span></label>
+      <label class="chip"><input type="checkbox" data-weapon="small_bow" checked><span>Small game archery</span><span class="tag">1-3</span></label>
+      <label class="chip"><input type="checkbox" data-weapon="large_rifle" checked><span>Large game rifle</span><span class="tag">4-9</span></label>
+      <label class="chip"><input type="checkbox" data-weapon="large_bow" checked><span>Large game archery</span><span class="tag">2-4</span></label>
+      <label class="chip"><input type="checkbox" data-weapon="pistol_s" checked><span>Small game pistol</span><span class="tag">1-2</span></label>
+      <label class="chip"><input type="checkbox" data-weapon="pistol_l" checked><span>Large game pistol</span><span class="tag">2-9</span></label>
+      <label class="chip"><input type="checkbox" data-weapon="shotgun" checked><span>Shotgun / fowling</span><span class="tag">1-9</span></label>
+      <label class="chip"><input type="checkbox" data-weapon="bow" checked><span>Archery (any)</span><span class="tag">1-9</span></label>
+    </section>
+  </div>
+
+  <div class="actions">
+    <button id="rollBtn" disabled>Roll</button>
+    <button class="ghost" id="allBtn">All on</button>
+    <button class="ghost" id="noneBtn">All off</button>
+    <span id="validHint"></span>
+  </div>
+  <div id="rollError"></div>
+
+  <div id="result">
+    <h3>— The Hunt —</h3>
+    <div class="row"><div class="k">Map</div><div class="v" id="rMap"></div></div>
+    <div class="row"><div class="k">Time of day</div><div class="v" id="rTime"></div></div>
+    <div class="row"><div class="k">Armament</div><div class="v" id="rWeapon"></div></div>
+    <div class="row"><div class="k">Bounty</div><div class="v bounty" id="rBounty"></div></div>
+    <div class="row"><div class="k">Secondary</div><div class="v bounty second" id="rSecond"></div></div>
+    <div class="notes" id="rNotes"></div>
+    <div class="share">
+      <div class="sharelabel">Share with your co-op partner</div>
+      <div class="sharebox"><code id="rShare"></code><button class="ghost" id="copyBtn">Copy</button></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// --- Data ------------------------------------------------------------------
+// Verified 2026-09 against the theHunter: COTW wiki: every reserve roster comes
+// from the `locations=` field of each species' infobox (cross-checked against
+// the per-reserve class tables — zero conflicts), and every species' class is
+// the game's real 1-9 ammo class from its infobox.
+//
+// CLASS: species -> ammo class(es) needed. One value each; a weapon can hunt a
+// species when the species' class falls inside any of the weapon's ranges.
+const CLASS = {
+"American Alligator": [7],
+"American Mink": [1],
+"Antelope Jackrabbit": [1],
+"Axis Deer": [3],
+"Banteng": [9],
+"Barasingha": [6],
+"Beceite Ibex": [4],
+"Bengal Tiger": [9],
+"Black Bear": [7],
+"Black Caiman": [7],
+"Black Grouse": [1],
+"Blackbuck": [3],
+"Blacktail Deer": [4],
+"Blue Sheep": [4],
+"Blue Wildebeest": [6],
+"Bobcat": [2],
+"Bobwhite Quail": [1],
+"Canada Goose": [1],
+"Cape Buffalo": [9],
+"Capybara": [4],
+"Chamois": [3],
+"Cinnamon Teal": [1],
+"Collared Peccary": [3],
+"Common Raccoon": [2],
+"Coyote": [2],
+"Desert Bighorn Sheep": [5],
+"Dusky Grouse": [1],
+"Eastern Cottontail Rabbit": [1],
+"Eastern Gray Kangaroo": [4],
+"Eastern Wild Turkey": [1],
+"Eurasian Brown Bear": [7],
+"Eurasian Lynx": [3],
+"Eurasian Pine Marten": [1],
+"Eurasian Teal": [1],
+"Eurasian Wigeon": [1],
+"Eurasian Woodcock": [1],
+"European Badger": [2],
+"European Bison": [9],
+"European Hare": [1],
+"European Rabbit": [1],
+"Fallow Deer": [4],
+"Feral Goat": [3],
+"Feral Pig": [5],
+"Ferruginous Duck": [1],
+"Gadwall": [1],
+"Gemsbok": [6],
+"Goldeneye": [1],
+"Grant Caribou": [6],
+"Gray Fox": [2],
+"Gray Wolf": [6],
+"Greater Grison": [1],
+"Gredos Ibex": [4],
+"Green Winged Teal": [1],
+"Greylag Goose": [1],
+"Grizzly Bear": [8],
+"Harlequin Duck": [1],
+"Hazel Grouse": [1],
+"Hog Deer": [3],
+"Iberian Mouflon": [4],
+"Iberian Wolf": [6],
+"Jaguar": [6],
+"Javan Rusa": [5],
+"Lesser Kudu": [4],
+"Lion": [9],
+"Magpie Goose": [1],
+"Mallard": [1],
+"Manitoban Elk": [7],
+"Merriam Turkey": [1],
+"Mexican Bobcat": [2],
+"Moose": [8],
+"Mountain Goat": [4],
+"Mountain Hare": [1],
+"Mountain Lion": [5],
+"Mountain Reindeer": [6],
+"Mule Deer": [5],
+"Nilgai": [6],
+"North American Beaver": [2],
+"Northern Pintail": [1],
+"Northern Red Muntjac": [2],
+"Ocelot": [2],
+"Plains Bison": [9],
+"Pronghorn": [3],
+"Puma": [5],
+"Raccoon Dog": [2],
+"Red Deer": [6],
+"Red Fox": [2],
+"Red Grouse": [1],
+"Ring-Necked Pheasant": [1],
+"Rio Grande Turkey": [1],
+"Rock Ptarmigan": [1],
+"Rocky Mountain Bighorn Sheep": [5],
+"Rocky Mountain Elk": [7],
+"Roe Deer": [3],
+"Ronda Ibex": [4],
+"Roosevelt Elk": [7],
+"Saltwater Crocodile": [8],
+"Sambar": [7],
+"Scrub Hare": [1],
+"Siberian Musk Deer": [2],
+"Side-Striped Jackal": [2],
+"Sika Deer": [4],
+"Snow Goose": [1],
+"Snow Leopard": [4],
+"South American Tapir": [6],
+"Southeastern Spanish Ibex": [4],
+"Spectacled Bear": [6],
+"Springbok": [3],
+"Stubble Quail": [1],
+"Tahr": [4],
+"Tibetan Fox": [2],
+"Tufted Duck": [1],
+"Tundra Bean Goose": [1],
+"Vicuña": [3],
+"Warthog": [4],
+"Water Buffalo": [9],
+"Western Capercaillie": [1],
+"White-tailed Jackrabbit": [1],
+"Whitetail Deer": [4],
+"Wild Boar": [5],
+"Wild Hog": [5],
+"Wild Yak": [9],
+"Willow Ptarmigan": [1],
+"Wood Bison": [9],
+"Wood Duck": [1],
+"Woodland Caribou": [6],
+"Woolly Hare": [1]
+};
+
+// 19 reserves: 2 base game + 17 DLC (wiki Reserves page, 2026).,
+
+const MAPS = [
+  { name:"Hirschfelden", free:true, species:["Canada Goose", "European Bison", "European Rabbit", "Fallow Deer", "Red Deer", "Red Fox", "Ring-Necked Pheasant", "Roe Deer", "Wild Boar"] },
+  { name:"Layton Lake District", free:true, species:["Black Bear", "Blacktail Deer", "Coyote", "Mallard", "Merriam Turkey", "Moose", "Roosevelt Elk", "White-tailed Jackrabbit", "Whitetail Deer"] },
+  { name:"Medved-Taiga", free:false, species:["Eurasian Brown Bear", "Eurasian Lynx", "Gray Wolf", "Moose", "Mountain Reindeer", "Siberian Musk Deer", "Western Capercaillie", "Wild Boar"] },
+  { name:"Vurhonga Savanna", free:false, species:["Blue Wildebeest", "Cape Buffalo", "Eurasian Wigeon", "Gemsbok", "Lesser Kudu", "Lion", "Scrub Hare", "Side-Striped Jackal", "Springbok", "Warthog"] },
+  { name:"Parque Fernando", free:false, species:["Axis Deer", "Blackbuck", "Cinnamon Teal", "Collared Peccary", "Mule Deer", "Puma", "Red Deer", "Water Buffalo"] },
+  { name:"Yukon Valley", free:false, species:["Canada Goose", "Grant Caribou", "Gray Wolf", "Grizzly Bear", "Harlequin Duck", "Moose", "Plains Bison", "Red Fox"] },
+  { name:"Cuatro Colinas", free:false, species:["Beceite Ibex", "European Hare", "Gredos Ibex", "Iberian Mouflon", "Iberian Wolf", "Red Deer", "Ring-Necked Pheasant", "Roe Deer", "Ronda Ibex", "Southeastern Spanish Ibex", "Wild Boar"] },
+  { name:"Silver Ridge Peaks", free:false, species:["Black Bear", "Merriam Turkey", "Mountain Goat", "Mountain Lion", "Mule Deer", "Plains Bison", "Pronghorn", "Puma", "Rocky Mountain Bighorn Sheep", "Rocky Mountain Elk"] },
+  { name:"Te Awaroa", free:false, species:["Chamois", "European Rabbit", "Fallow Deer", "Feral Goat", "Feral Pig", "Mallard", "Merriam Turkey", "Moose", "Red Deer", "Sika Deer", "Tahr", "Wild Hog"] },
+  { name:"Rancho del Arroyo", free:false, species:["Antelope Jackrabbit", "Collared Peccary", "Coyote", "Desert Bighorn Sheep", "Mexican Bobcat", "Mule Deer", "Pronghorn", "Ring-Necked Pheasant", "Rio Grande Turkey", "Whitetail Deer"] },
+  { name:"Mississippi Acres", free:false, species:["American Alligator", "Black Bear", "Bobwhite Quail", "Common Raccoon", "Eastern Cottontail Rabbit", "Eastern Wild Turkey", "Feral Pig", "Gray Fox", "Green Winged Teal", "Whitetail Deer", "Wild Hog"] },
+  { name:"Revontuli Coast", free:false, species:["Black Grouse", "Canada Goose", "Eurasian Brown Bear", "Eurasian Lynx", "Eurasian Teal", "Eurasian Wigeon", "Goldeneye", "Greylag Goose", "Hazel Grouse", "Mallard", "Moose", "Mountain Hare", "Raccoon Dog", "Rock Ptarmigan", "Tufted Duck", "Tundra Bean Goose", "Western Capercaillie", "Whitetail Deer", "Willow Ptarmigan"] },
+  { name:"New England Mountains", free:false, species:["Black Bear", "Bobcat", "Bobwhite Quail", "Common Raccoon", "Coyote", "Eastern Cottontail Rabbit", "Eastern Wild Turkey", "Goldeneye", "Gray Fox", "Green Winged Teal", "Mallard", "Mexican Bobcat", "Moose", "Red Fox", "Ring-Necked Pheasant", "Whitetail Deer"] },
+  { name:"Emerald Coast", free:false, species:["Axis Deer", "Banteng", "Eastern Gray Kangaroo", "Fallow Deer", "Feral Goat", "Feral Pig", "Hog Deer", "Javan Rusa", "Magpie Goose", "Red Deer", "Red Fox", "Saltwater Crocodile", "Sambar", "Stubble Quail"] },
+  { name:"Sundarpatan", free:false, species:["Barasingha", "Bengal Tiger", "Blackbuck", "Blue Sheep", "Greylag Goose", "Nilgai", "Northern Red Muntjac", "Snow Leopard", "Tahr", "Tibetan Fox", "Water Buffalo", "Wild Yak", "Woolly Hare"] },
+  { name:"Salzwiesen Park", free:false, species:["Black Grouse", "Common Raccoon", "Eurasian Teal", "Eurasian Wigeon", "European Rabbit", "Ferruginous Duck", "Gadwall", "Goldeneye", "Greylag Goose", "Mallard", "Raccoon Dog", "Red Fox", "Ring-Necked Pheasant", "Tufted Duck", "Tundra Bean Goose"] },
+  { name:"Askiy Ridge", free:false, species:["Black Bear", "Canada Goose", "Dusky Grouse", "Gray Wolf", "Mallard", "Manitoban Elk", "Moose", "Mountain Goat", "Mule Deer", "North American Beaver", "Northern Pintail", "Pronghorn", "Ring-Necked Pheasant", "Rocky Mountain Bighorn Sheep", "Snow Goose", "Whitetail Deer", "Wood Bison", "Wood Duck", "Woodland Caribou"] },
+  { name:"Tòrr nan Sithean", free:false, species:["American Mink", "Black Grouse", "Eurasian Pine Marten", "Eurasian Wigeon", "Eurasian Woodcock", "European Badger", "Fallow Deer", "Feral Goat", "Mountain Hare", "Red Deer", "Red Fox", "Red Grouse", "Ring-Necked Pheasant", "Roe Deer", "Sika Deer", "Western Capercaillie", "Wild Boar"] },
+  { name:"Intisuyu", free:false, species:["Black Caiman", "Capybara", "Cinnamon Teal", "Collared Peccary", "Greater Grison", "Jaguar", "Ocelot", "Puma", "South American Tapir", "Spectacled Bear", "Vicuña", "Whitetail Deer"] }
+];
+// Reserve icons: 17 DLC reserves use the official site's reserve art, vendored
+// locally in icons/ (captured from callofthewild.thehunter.com, June 2026).
+// The two base-game reserves predate that page — Hirschfelden keeps a wiki
+// logo, Layton a monogram. tint is the backdrop behind each emblem.
+// ponytail: local files over hotlinks so the Pages deploy never breaks if the
+// studio CDN or the wiki changes; onerror still falls back to the monogram.
+const MAP_ICONS = {
+"Hirschfelden": {logo:"https://static.wikia.nocookie.net/thehuntercotw/images/7/71/Hirschfelden_logo-background.jpg/revision/latest?cb=20211229205958", tint:"#4a6b3a"},
+"Layton Lake District": {init:"LL", tint:"#4a7a8a"},
+"Medved-Taiga": {img:"icons/TH_R03_Medved_Taiga.png", tint:"#4a6a4a"},
+"Vurhonga Savanna": {img:"icons/TH_R04_Vurhonga_Savanna.png", tint:"#b8863a"},
+"Parque Fernando": {img:"icons/TH_R05_Parque_Fernando.png", tint:"#5a7a6a"},
+"Yukon Valley": {img:"icons/TH_R06_Yukon_Valley.png", tint:"#5a6a8a"},
+"Cuatro Colinas": {img:"icons/TH_R07_Cuatro_Colinas.png", tint:"#8a6a3a"},
+"Silver Ridge Peaks": {img:"icons/TH_R08_Silver_Ridge_Peaks.png", tint:"#6b6b7a"},
+"Te Awaroa": {img:"icons/TH_R09_Te_Awaroa.png", tint:"#5a8a5a"},
+"Rancho del Arroyo": {img:"icons/TH_R10_Rancho_Del_Arroyo.png", tint:"#8a5a4a"},
+"Mississippi Acres": {img:"icons/TH_R11_Mississippi_Acres.png", tint:"#4a7a5a"},
+"Revontuli Coast": {img:"icons/TH_R12_Revontuli_Coast.png", tint:"#4a6b8a"},
+"New England Mountains": {img:"icons/TH_R13_New_England_Mountains.png", tint:"#557a4a"},
+"Emerald Coast": {img:"icons/TH_R14_Emerald_Coast.png", tint:"#3a7a6a"},
+"Sundarpatan": {img:"icons/TH_R15_Sundarpatan.png", tint:"#a05a3a"},
+"Salzwiesen Park": {img:"icons/TH_R16_Salzwiesen_Park.png", tint:"#4a8a7a"},
+"Askiy Ridge": {img:"icons/TH_R17_Alberta_Preserve.png", tint:"#6b8aa0"},
+"Tòrr nan Sithean": {img:"icons/TH_R18_Scotland_Hunting_Reserve.png", tint:"#5a5a7a"},
+"Intisuyu": {img:"icons/TH_R19_Peru_Hunting_Reserve.png", tint:"#7a5a3a"}
+};
+
+
+
+
+function emblemHTML(name) {
+  const ic = MAP_ICONS[name];
+  if (!ic) return "";
+  const style = `--tint:${ic.tint}`;
+  if (ic.img || ic.logo) {
+    // monogram sits behind the image so a missing file still shows something
+    return `<span class="hex" style="${style}"><span class="hexmono">${ic.init || name.slice(0,2).toUpperCase()}</span><img class="heximg" src="${ic.img || ic.logo}" alt="" onerror="this.remove()">`;
+  }
+  return `<span class="hex" style="${style}"><span class="hexmono">${ic.init}</span></span>`;
+}
+
+// --- Armaments ---------------------------------------------------------------
+// ranges = ammo classes legal with the real in-game weapons of that class
+// (from the wiki Weapons page). A bounty is hunt-able when its class falls in
+// one of the ranges.
+const WEAPONS = [
+  { id:"small_rifle", label:"Small game rifle", ranges:[[1,2],[2,4],[2,6],[3,6]], note:".22 – .257 rifles" },
+  { id:"small_bow",   label:"Small game archery",   ranges:[[1,3]], note:"recurve bows" },
+  { id:"large_rifle", label:"Large game rifle", ranges:[[4,8],[4,9],[7,9],[8,9]], note:"heavy-caliber rifles" },
+  { id:"large_bow",   label:"Large game archery",   ranges:[[2,4]], note:"crossbows / compound bows" },
+  { id:"pistol_s",    label:"Small game pistol",ranges:[[1,2]], note:".22 pistols" },
+  { id:"pistol_l",    label:"Large game pistol",ranges:[[2,6],[3,8],[4,9]], note:".357 – .454 pistols" },
+  { id:"shotgun",     label:"Shotgun / fowling",ranges:[[1,9]], note:"shell + slug loadings, class 1-9" },
+  { id:"bow",         label:"Archery (any)",        ranges:[[1,9]], note:"bows hunt class 1-9" },
+];
+
+function canHunt(weapon, sp) {
+  const cs = CLASS[sp];
+  if (!cs) return false;                    // species without class data -> excluded
+  return weapon.ranges.some(([lo, hi]) => cs.some(c => c >= lo && c <= hi));
+}
+
+// --- UI ----------------------------------------------------------------------
+// ponytail: chips are static HTML (render even with JS blocked, e.g. in preview
+// panes); JS injects the reserve emblems, restores the last selection from a
+// cookie, and saves it back on every change.
+const COOKIE = "hunterdice.prefs", TTL = "max-age=31536000"; // 1 year
+// ponytail: cookie access can be blocked (privacy mode, some embeds) — guard so
+// an unavailable cookie store never takes the page down. Falls back to the
+// static HTML defaults (free on, DLC off) when nothing can be read/written.
+function readCookie() {
+  try {
+    const m = document.cookie.match(new RegExp("(?:^|; )" + COOKIE + "=([^;]*)"));
+    if (!m) return null;
+    return JSON.parse(decodeURIComponent(m[1]));
+  } catch { return null; }
+}
+function saveCookie() {
+  try { document.cookie = COOKIE + "=" + encodeURIComponent(JSON.stringify({ m: state.maps, w: state.weapons })) + "; path=/; " + TTL; } catch {}
+}
+
+const state = { maps: {}, weapons: {} };
+const saved = readCookie();
+document.querySelectorAll('input[data-map]').forEach(i => {
+  const key = i.dataset.map;
+  if (saved && saved.m && key in saved.m) i.checked = !!saved.m[key];
+  state.maps[key] = i.checked;
+  i.closest('label').insertAdjacentHTML('afterbegin', emblemHTML(key));
+  i.addEventListener('change', () => { state.maps[key] = i.checked; refresh(); saveCookie(); });
+});
+document.querySelectorAll('input[data-weapon]').forEach(i => {
+  const key = i.dataset.weapon;
+  if (saved && saved.w && key in saved.w) i.checked = !!saved.w[key];
+  state.weapons[key] = i.checked;
+  i.addEventListener('change', () => { state.weapons[key] = i.checked; refresh(); saveCookie(); });
+});
+const nojs = document.querySelector('.nojs');
+if (nojs) nojs.remove();
+
+const rollBtn = document.getElementById("rollBtn");
+const rollError = document.getElementById("rollError");
+const validHint = document.getElementById("validHint");
+
+function refresh() {
+  const mapsOn = MAPS.filter(m => state.maps[m.name]);
+  const weapOn = WEAPONS.filter(w => state.weapons[w.id]);
+  const anyValid = mapsOn.some(m => weapOn.some(w =>
+    [...new Set(m.species)].some(sp => canHunt(w, sp))));
+  rollBtn.disabled = !(mapsOn.length && weapOn.length && anyValid);
+  validHint.textContent = mapsOn.length + " reserve(s) / " + weapOn.length + " armament(s) enabled" +
+    (anyValid ? "" : " — no valid combinations; enable more maps or armaments");
+}
+refresh();
+
+document.getElementById("allBtn").onclick = () => {
+  document.querySelectorAll('input[data-map], input[data-weapon]').forEach(i => {
+    i.checked = true;
+    (i.dataset.map ? state.maps[i.dataset.map] = true : state.weapons[i.dataset.weapon] = true);
+  });
+  refresh(); saveCookie();
+};
+document.getElementById("noneBtn").onclick = () => {
+  document.querySelectorAll('input[data-map], input[data-weapon]').forEach(i => {
+    i.checked = false;
+    (i.dataset.map ? state.maps[i.dataset.map] = false : state.weapons[i.dataset.weapon] = false);
+  });
+  refresh(); saveCookie();
+};
+
+function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+rollBtn.onclick = () => {
+  const mapsOn = MAPS.filter(m => state.maps[m.name]);
+  const weapOn = WEAPONS.filter(w => state.weapons[w.id]);
+  rollError.style.display = "none";
+
+  // Collect valid (map, weapon) pairs, then pick a pair and a bounty within it.
+  const pairs = [];
+  for (const m of mapsOn)
+    for (const w of weapOn) {
+      const valid = [...new Set(m.species)].filter(sp => canHunt(w, sp));
+      if (valid.length) pairs.push({ m, w, valid });
+    }
+  if (!pairs.length) {
+    rollError.textContent = "No valid combination with the current selections. Enable more maps or armaments.";
+    rollError.style.display = "block";
+    return;
+  }
+  const { m, w, valid } = pick(pairs);
+  const bounty = pick(valid);
+  const rest = valid.length > 1 ? valid.filter(s => s !== bounty) : [];
+  const second = rest.length ? pick(rest) : null;   // secondary goal: different species, same legality
+  const time = pick(["Day", "Night"]);
+
+  document.getElementById("rMap").textContent = m.name + (m.free ? "" : "  (DLC)");
+  document.getElementById("rTime").textContent = time;
+  document.getElementById("rWeapon").textContent = w.label + "  —  " + w.note;
+  document.getElementById("rBounty").innerHTML = bounty + "<small>on " + m.name + "</small>";
+  document.getElementById("rSecond").innerHTML = second
+    ? second + "<small>secondary target</small>"
+    : "—<small>only one legal species for this pair</small>";
+  const share = "Hunt or Die → " + m.name + (m.free ? "" : " (DLC)") + " · " + time + " · " + w.label +
+    " · Bounty: " + bounty + (second ? " · Second: " + second : "");
+  document.getElementById("rShare").textContent = share;
+
+  const unknown = [...new Set(m.species)].filter(sp => CLASS[sp] === undefined);
+  let notes = "<p class='ok'>✓ " + bounty + " is hunt-able with " + w.label.toLowerCase() + " on " + m.name + ".</p>";
+  if (valid.length <= 2) notes += "<p>Only " + valid.length + " bounty option(s) existed for this pair: " + valid.join(", ") + ".</p>";
+  if (unknown.length) notes += "<p class='bad'>Skipped (no weapon-class data): " + unknown.join(", ") + " — add them to the CLASS table in this file if they're hunt-able.</p>";
+  notes += "<p>Set map + time of day in the Hunt or Die lobby. Each player brings the rolled armament class; the bounty is the shared target.</p>";
+  document.getElementById("rNotes").innerHTML = notes;
+  document.getElementById("result").classList.add("show");
+};
+
+document.getElementById("copyBtn").onclick = async () => {
+  const txt = document.getElementById("rShare").textContent;
+  const btn = document.getElementById("copyBtn");
+  try {
+    await navigator.clipboard.writeText(txt);
+    btn.textContent = "Copied ✓";
+  } catch {
+    // ponytail: clipboard API can be blocked on file:// — fall back to select-all
+    const ta = document.createElement("textarea");
+    ta.value = txt; document.body.appendChild(ta); ta.select();
+    try { document.execCommand("copy"); btn.textContent = "Copied ✓"; }
+    catch { btn.textContent = "Select+copy manually"; }
+    ta.remove();
+  }
+  setTimeout(() => btn.textContent = "Copy", 1500);
+};
+</script>
+</body>
+</html>

@@ -1,0 +1,5 @@
+# deploy key material never belongs in the repo
+*.pem
+*.key
+*_ed25519
+.DS_Store
