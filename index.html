@@ -59,6 +59,13 @@
     transform: translate(-50%,-50%); color: var(--gold);
     font-size: 9px; background: var(--bg); padding: 0 8px;
   }
+  .src {
+    display: inline-block; margin-top: 12px;
+    font-family: var(--sans); font-size: 11px; letter-spacing: 2px;
+    text-transform: uppercase; color: var(--dim);
+    text-decoration: none; border-bottom: 1px solid var(--gold);
+  }
+  .src:hover { color: var(--gold); }
 
   /* ---------- panels ---------- */
   .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
@@ -205,6 +212,7 @@
     <h1><span class="deer">🦌</span>Hunt Dice</h1>
     <div class="sub">random settings for <b>Hunt or Die</b> — map · armament · time of day · bounty</div>
     <div class="rule"></div>
+    <a class="src" href="https://github.com/vacovsky/thehuntercotw_missionrandomizer" target="_blank" rel="noopener">source on github</a>
   </header>
 
   <div class="cols">
