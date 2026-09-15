@@ -196,6 +196,8 @@ chdir: error retrieving current directory: getcwd: cannot access parent director
     color: var(--green-ink);
   }
   .row .v { font-size: 17px; font-weight: 500; }
+  .row .v small { font-family: var(--sans); font-size: 12px; font-weight: 400;
+    color: var(--dim); margin-left: 10px; }
   .row .v.bounty {
     font-family: var(--serif); font-size: 22px; font-weight: 700;
     letter-spacing: 1px; color: var(--gold);
@@ -619,17 +621,22 @@ rollBtn.onclick = () => {
   const bounty = pick(valid);
   const rest = valid.length > 1 ? valid.filter(s => s !== bounty) : [];
   const second = rest.length ? pick(rest) : null;   // secondary goal: different species, same legality
-  const time = pick(["Day", "Night"]);
+  // specific time of day on a 24h clock + a phase label so it reads at a glance
+  const h = Math.floor(Math.random() * 24);
+  const time = String(h).padStart(2, "0") + ":00";
+  const phase = h >= 5 && h < 9 ? "dawn" : h >= 9 && h < 18 ? "day" : h >= 18 && h < 21 ? "dusk" : "night";
+  const bClass = CLASS[bounty][0];
+  const sClass = second ? CLASS[second][0] : null;
 
   document.getElementById("rMap").textContent = m.name + (m.free ? "" : "  (DLC)");
-  document.getElementById("rTime").textContent = time;
+  document.getElementById("rTime").innerHTML = time + "<small>" + phase + "</small>";
   document.getElementById("rWeapon").textContent = w.label + "  —  " + w.note;
-  document.getElementById("rBounty").innerHTML = bounty + "<small>on " + m.name + "</small>";
+  document.getElementById("rBounty").innerHTML = bounty + "<small>class " + bClass + " · on " + m.name + "</small>";
   document.getElementById("rSecond").innerHTML = second
-    ? second + "<small>secondary target</small>"
+    ? second + "<small>class " + sClass + " · secondary target</small>"
     : "—<small>only one legal species for this pair</small>";
-  const share = "Hunt or Die → " + m.name + (m.free ? "" : " (DLC)") + " · " + time + " · " + w.label +
-    " · Bounty: " + bounty + (second ? " · Second: " + second : "");
+  const share = "Hunt or Die → " + m.name + (m.free ? "" : " (DLC)") + " · " + time + " (" + phase + ") · " + w.label +
+    " · Bounty: " + bounty + " (class " + bClass + ")" + (second ? " · Second: " + second + " (class " + sClass + ")" : "");
   document.getElementById("rShare").textContent = share;
 
   const unknown = [...new Set(m.species)].filter(sp => CLASS[sp] === undefined);
